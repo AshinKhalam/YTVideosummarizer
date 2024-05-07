@@ -1,0 +1,209 @@
+{% load static %}
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>YouScript</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
+    <style>
+        /* Loading screen styles */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9); /* White background with transparency */
+            z-index: 1000; /* Ensure it's on top */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+        }
+    
+        #loading-message {
+            font-size: 16px;
+            margin-top: 10px; /* Add some spacing */
+            text-align: center; /* Center text */
+        }
+    
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    
+        .loader {
+            border: 5px solid #f3f3f3; /* Light grey */
+            border-top: 5px solid red; /* Red */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite; /* Spin animation */
+        }
+    
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    
+        /* Styles for tags */
+        .tag {
+            display: inline-block;
+            background-color: red; /* Red color */
+            color: #fff; /* White text color */
+            border-radius: 5px;
+            padding: 5px 10px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            cursor: pointer; /* Change cursor to pointer on hover */
+        }
+    
+    </style>    
+</head>
+<body class="is-preload">
+<!-- Loading screen -->
+<div id="loading-screen">
+    <div class="loader-container">
+        <div class="loader"></div>
+        <div id="loading-message">Please be patient as it may take some time.</div>
+    </div>
+</div>
+
+<!-- Wrapper -->
+<div id="wrapper">
+    <!-- Main -->
+    <div id="main">
+        <div class="inner">
+            <!-- Header -->
+            <header id="header">
+                <a href="/" class="logo"><strong>*YouScript logo*</strong></a>
+            </header>
+            <!-- Banner -->
+            <section id="banner">
+                <div class="content">
+                    <header>
+                        <h1>Welcome to YouScript,<br />
+                            a YouTube video summarizer</h1>
+                    </header>
+                    <p>Have an hour long lecture video you need to watch before an exam that’s half an hour away? Need to see a research video that’s 3 hours long for your thesis when your submission is in one hour? Well you’ve come to the right place!
+                        Welcome to YouScript, a YouTube video summarizer that not only provides you with a summarized yet accurate transcript but also allows you to edit the summary to your liking. Just enter the link of the video needed to be summarized, and enter summarize. Your summary can also be downloaded as a PDF for your back up</p>
+
+                        <form method="post" action="{% url 'generic' %}">
+                            {% csrf_token %}
+                            <div id="search" class="alt" style="margin-bottom: 10px;">
+                                <input type="text" name="youtube_url" id="youtube_url" placeholder="Enter link" />
+                                <div id="tags-container" class="tags-container"></div> <!-- Container for displaying tags -->
+                                <input type="hidden" name="keywords" id="keywords" /> <!-- Hidden input field to store tags -->
+                            </div>
+
+                            <div class="col-6" style="margin-bottom: 10px;">
+                                <ul id="keyword-tags" class="keyword-tags"></ul>
+                                <input type="text" id="keyword-input" placeholder="Enter keywords (optional)" />
+                            </div>
+                        
+                            <ul class="actions" style="margin-bottom: 10px;">
+                                <li><button type="submit" id="summarizeBtn" class="button big">Summarize</button></li>
+                            </ul>
+                        </form>
+
+                    <!-- Invalid link message -->
+                    {% if invalid_link %}
+                    <p style="color: red;">Invalid YouTube link. Please enter a valid link.</p>
+                    {% endif %}
+                </div>
+            </section>
+
+        <!-- Get in touch section -->
+        <header class="major">
+            <h2>Get in touch</h2>
+        </header>
+        <ul class="contact">
+            <li class="icon solid fa-envelope"><a href="#">insertemail@gmail.com</a></li>
+            <li class="icon solid fa-phone">884895380</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<script src="{% static 'js/browser.min.js' %}"></script>
+<script src="{% static 'js/breakpoints.min.js' %}"></script>
+<script src="{% static 'js/util.js' %}"></script>
+<script src="{% static 'js/main.js' %}"></script>
+
+<!-- JavaScript for adding tags -->
+<script>
+    // Function to add a tag
+    function addTag(tag) {
+        // Create a new li element for the tag
+        var tagElement = document.createElement('li');
+        tagElement.className = 'tag';
+        tagElement.textContent = tag;
+
+        // Add click event listener to remove the tag when clicked
+        tagElement.addEventListener('click', function() {
+            tagElement.parentNode.removeChild(tagElement); // Remove the tag from DOM
+            updateHiddenInput(); // Update the hidden input field
+        });
+
+        // Append the tag to the tags container
+        document.getElementById('keyword-tags').appendChild(tagElement);
+
+        // Update the hidden input field
+        updateHiddenInput();
+    }
+
+    // Function to update the hidden input field with the tags
+    function updateHiddenInput() {
+        var tags = document.querySelectorAll('.tag');
+        var keywordsInput = document.getElementById('keywords');
+        var keywords = [];
+
+        // Extract tags text
+        tags.forEach(function(tag) {
+            keywords.push(tag.textContent);
+        });
+
+        // Update hidden input value with comma-separated tags
+        keywordsInput.value = keywords.join(',');
+    }
+
+    // Function to handle adding tags when space key is pressed
+    function handleTags() {
+        var keywordInput = document.getElementById('keyword-input');
+
+        // Add tag when space key is pressed
+        keywordInput.addEventListener('keypress', function(event) {
+            if (event.keyCode === 32) { // Check if space key is pressed
+                var tag = keywordInput.value.trim(); // Get the entered text
+                if (tag) {
+                    addTag(tag); // Add the text as a tag
+                    keywordInput.value = ''; // Clear the input field
+                }
+                event.preventDefault(); // Prevent default behavior of space key
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        handleTags(); // Initialize tag handling
+    });
+</script>
+
+<!-- JavaScript for loading screen -->
+<script>
+    $(document).ready(function() {
+        // Show loading screen when the summarize button is clicked
+        $('#summarizeBtn').click(function() {
+            $('#loading-screen').fadeIn('slow');
+        });
+
+        // Hide loading screen once the page is fully loaded
+        $(window).on('load', function() {
+            $('#loading-screen').fadeOut('slow');
+        });
+    });
+</script>
+</body>
+</html>

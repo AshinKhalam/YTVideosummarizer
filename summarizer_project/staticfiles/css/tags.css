@@ -1,0 +1,15 @@
+/* CSS for tags */
+.tags-container {
+    display: inline-block;
+    padding: 5px;
+}
+
+.tag {
+    display: inline-block;
+    background-color: #007bff; /* Blue color */
+    color: #fff; /* White text color */
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
